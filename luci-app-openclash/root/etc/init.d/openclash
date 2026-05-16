@@ -409,6 +409,14 @@ config_check()
 #rm -rf "/etc/openclash/*.y*" 2>/dev/null
 cp "$RAW_CONFIG_FILE" "$TMP_CONFIG_FILE"
 
+if [ "$core_type" = "Rust" ]; then
+   LOG_OUT "Testing Config File with Rust Core..."
+   $CLASH --compatibility true -d "$CLASH_CONFIG" -t -f "$TMP_CONFIG_FILE" >> "$LOG_FILE" 2>&1
+   if [ $? -ne 0 ]; then
+      LOG_ERROR "Config File Test Failed, Please Check The Log Infos!"
+   fi
+fi
+
 ruby -ryaml -rYAML -I "/usr/share/openclash" -E UTF-8 -e "
 begin
    YAML.load_file('$RAW_CONFIG_FILE');
@@ -423,16 +431,6 @@ if [ $? -ne 0 ]; then
 elif [ ! -f "$TMP_CONFIG_FILE" ] || [ ! -s "$TMP_CONFIG_FILE" ]; then
    LOG_ERROR "Config File Format Validation Failed..."
    start_fail
-fi
-
-if [ "$core_type" = "Rust" ]; then
-   LOG_OUT "Testing Config File with Rust Core..."
-   LOG_OUT "$CLASH --compatibility true -d $CLASH_CONFIG -t -f \"$TMP_CONFIG_FILE\""
-   $CLASH --compatibility true -d "$CLASH_CONFIG" -t -f "$TMP_CONFIG_FILE" >> "$LOG_FILE" 2>&1
-   if [ $? -ne 0 ]; then
-      LOG_ERROR "Config File Test Failed, Please Check The Log Infos!"
-      start_fail
-   fi
 fi
 }
 
