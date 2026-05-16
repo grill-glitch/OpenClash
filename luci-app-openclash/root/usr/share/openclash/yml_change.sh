@@ -444,7 +444,7 @@ begin
 
          (Value['experimental'] ||= {})['quic-go-disable-gso'] = true if quic_gso
          if cors_origin != '0'
-            (Value['external-controller-cors'] ||= {})['allow-origins'] = (core_type == 'Rust') ? cors_origin : [cors_origin]
+            (Value['external-controller-cors'] ||= {})['allow-origins'] = [cors_origin]
             Value['external-controller-cors']['allow-private-network'] = true
          end
 
@@ -509,7 +509,7 @@ begin
          if en_mode_tun != '0' || ['2', '3'].include?(ipv6_mode)
             Value['tun'] = {
                'enable' => true, 'stack' => stack_type, 'device' => 'utun',
-               'dns-hijack' => (core_type == 'Rust') ? '127.0.0.1:53' : ['127.0.0.1:53'],
+               'dns-hijack' => ['127.0.0.1:53'],
                'endpoint-independent-nat' => true,
                'auto-route' => false, 'auto-detect-interface' => false,
                'auto-redirect' => false, 'strict-route' => false, 'disable-icmp-forwarding' => false
@@ -719,6 +719,13 @@ begin
 
    begin
       threads.clear
+
+      if core_type == 'Rust'
+         YAML.LOG('Current DNS Config: %s' % [Value['dns'].to_s])
+         YAML.LOG('Current Tun Config: %s' % [Value['tun'].to_s])
+         YAML.LOG('Current Experimental Config: %s' % [Value['experimental'].to_s])
+         YAML.LOG('Current External Controller Config: %s' % [Value['external-controller-cors'].to_s])
+      end
 
       # DNS Loop Check
       if enable_redirect_dns == '1'
