@@ -357,6 +357,7 @@ begin
    append_sniffer_config = '${21}' == '1'
    interface_name = '${22}'
    tcp_concurrent = '${23}' == '1'
+   core_type = '${24}'
    add_default_from_dns = '${25}' == '1'
    sniffer_parse_pure_ip = '${26}' == '1'
    find_process_mode = '${27}'
@@ -508,7 +509,8 @@ begin
          if en_mode_tun != '0' || ['2', '3'].include?(ipv6_mode)
             Value['tun'] = {
                'enable' => true, 'stack' => stack_type, 'device' => 'utun',
-               'dns-hijack' => ['127.0.0.1:53'], 'endpoint-independent-nat' => true,
+               'dns-hijack' => ['127.0.0.1:53'],
+               'endpoint-independent-nat' => true,
                'auto-route' => false, 'auto-detect-interface' => false,
                'auto-redirect' => false, 'strict-route' => false, 'disable-icmp-forwarding' => false
             }
@@ -717,6 +719,13 @@ begin
 
    begin
       threads.clear
+
+      if core_type == 'Rust'
+         YAML.LOG('Current DNS Config: %s' % [Value['dns'].to_s])
+         YAML.LOG('Current Tun Config: %s' % [Value['tun'].to_s])
+         YAML.LOG('Current Experimental Config: %s' % [Value['experimental'].to_s])
+         YAML.LOG('Current External Controller Config: %s' % [Value['external-controller-cors'].to_s])
+      end
 
       # DNS Loop Check
       if enable_redirect_dns == '1'
