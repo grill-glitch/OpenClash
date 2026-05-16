@@ -32,4 +32,12 @@ else
 fi
 
 DOWNLOAD_FILE_CURL "$DOWNLOAD_URL" "$DOWNLOAD_FILE" "$DOWNLOAD_FILE"
+
+#Clash Rust
+RUST_LV=$(curl -sLI -o /dev/null -w '%{url_effective}' https://github.com/Watfaq/clash-rs/releases/latest | awk -F '/' '{print $NF}')
+if [ -n "$RUST_LV" ]; then
+   sed -i '3d' "$DOWNLOAD_FILE" 2>/dev/null
+   echo "$RUST_LV" >> "$DOWNLOAD_FILE"
+fi
+
 del_lock
