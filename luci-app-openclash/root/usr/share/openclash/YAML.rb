@@ -65,7 +65,7 @@ module YAML
 	QUOTED_VALUE_REGEX = /^(["'].*["']|null)$/
 
 	# Inline map support, e.g. reality-opts: { ..., short-id: 00000000 }
-	INLINE_SHORT_ID_REGEX = /(short-id:\s*)(?!["'\[]|null)([^\s,"'{}\[\]\n\r]+)(?=\s*(?:[,}\]\n\r]|$))/m.freeze
+	INLINE_SHORT_ID_REGEX = /(short-id:\s*)(?!["'\[]|null)([^\s,"'{}\[\]\n\r]*)(?=\s*(?:[,}\]\n\r]|$))/m.freeze
 
 	def self.fix_short_id_quotes(yaml_content)
 		return yaml_content unless yaml_content.include?('short-id:')
@@ -73,7 +73,9 @@ module YAML
 		begin
 			# First, normalize inline-map style unquoted short-id.
 			processed = yaml_content.gsub(INLINE_SHORT_ID_REGEX) do
-				"#{$1}\"#{$2}\""
+				prefix = $1
+				val = $2.to_s.strip
+				"#{prefix}\"#{val}\""
 			end
 
 			lines = processed.lines
@@ -82,31 +84,33 @@ module YAML
 				line = lines[short_id_index]
 				if line =~ SHORT_ID_REGEX
 					indent = $1
-					value = $2.strip
-					if value.empty?
+					value = $2.to_s.strip
+					if value.empty? || value == "null"
+						is_list = false
 						(short_id_index + 1...lines.size).each do |i|
-							line = lines[i]
-							next if line.strip.empty?
-							if line[/^\s*/].length <= indent.length
-								break
-							end
-							if line =~ LIST_ITEM_REGEX
-								indent = $1
-								value = $2.strip
-								if value =~ KEY_REGEX
-									break
+							next_line = lines[i]
+							next if next_line.strip.empty?
+							if next_line[/^\s*/].length > indent.length
+								if next_line =~ LIST_ITEM_REGEX
+									is_list = true
+									# Quote list items if needed
+									item_indent = $1
+									item_value = $2.strip
+									if item_value !~ QUOTED_VALUE_REGEX && item_value !~ KEY_REGEX
+										lines[i] = "#{item_indent}- \"#{item_value}\"\n"
+									end
+								else
+									# Still inside short-id but not a list item yet, maybe comments or other keys?
+									# If it's another key with same or less indent, it's not a list.
+									break if next_line =~ KEY_REGEX && next_line[/^\s*/].length <= indent.length
 								end
-								if value !~ QUOTED_VALUE_REGEX
-									lines[i] = "#{indent}- \"#{value}\"\n"
-								end
-							elsif line =~ KEY_REGEX
+							else
 								break
 							end
 						end
-					else
-						if value !~ QUOTED_VALUE_REGEX
-							lines[short_id_index] = "#{indent}short-id: \"#{value}\"\n"
-						end
+						lines[short_id_index] = "#{indent}short-id: \"\"\n" unless is_list
+					elsif value !~ QUOTED_VALUE_REGEX
+						lines[short_id_index] = "#{indent}short-id: \"#{value}\"\n"
 					end
 				end
 			end
