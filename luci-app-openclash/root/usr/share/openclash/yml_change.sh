@@ -444,7 +444,11 @@ begin
 
          (Value['experimental'] ||= {})['quic-go-disable-gso'] = true if quic_gso
          if cors_origin != '0'
-            (Value['external-controller-cors'] ||= {})['allow-origins'] = [cors_origin]
+            if core_type == 'Rust'
+               (Value['external-controller-cors'] ||= {})['allow-origins'] = cors_origin
+            else
+               (Value['external-controller-cors'] ||= {})['allow-origins'] = [cors_origin]
+            end
             Value['external-controller-cors']['allow-private-network'] = true
          end
 
@@ -509,7 +513,7 @@ begin
          if en_mode_tun != '0' || ['2', '3'].include?(ipv6_mode)
             Value['tun'] = {
                'enable' => true, 'stack' => stack_type, 'device' => 'utun',
-               'dns-hijack' => ['127.0.0.1:53'],
+               'dns-hijack' => core_type == 'Rust' ? '127.0.0.1:53' : ['127.0.0.1:53'],
                'endpoint-independent-nat' => true,
                'auto-route' => false, 'auto-detect-interface' => false,
                'auto-redirect' => false, 'strict-route' => false, 'disable-icmp-forwarding' => false

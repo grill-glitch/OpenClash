@@ -1,12 +1,15 @@
 name: Compile The New Version OpenClash
 
-on: 
+on:
   push:
     branches:
       - dev
     paths:
       - 'luci-app-openclash/Makefile'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   Get-Version:
@@ -33,7 +36,11 @@ jobs:
       - name: Current Version
         id: current_version
         run: |
-          echo "version=$(sed -n 1p ./${{ github.ref_name }}/version |awk -F 'v' '{print $2}')" >> $GITHUB_OUTPUT
+          if [ -f "./${{ github.ref_name }}/version" ]; then
+            echo "version=$(sed -n 1p ./${{ github.ref_name }}/version |awk -F 'v' '{print $2}')" >> $GITHUB_OUTPUT
+          else
+            echo "version=0" >> $GITHUB_OUTPUT
+          fi
 
   Compile:
     runs-on: ubuntu-latest
@@ -184,6 +191,7 @@ jobs:
 
       - name: Commit and Push New Version
         run: |
+          mkdir -p ./${{ github.ref_name }}
           rm -rf ./${{ github.ref_name }}/luci-app-openclash*
           echo "v${{ needs.Get-Version.outputs.version }}" > ./${{ github.ref_name }}/version
           echo "https://img.shields.io/badge/New Release-v${{ needs.Get-Version.outputs.version }}-orange.svg" >> ./${{ github.ref_name }}/version
