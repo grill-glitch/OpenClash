@@ -65,7 +65,7 @@ module YAML
 	QUOTED_VALUE_REGEX = /^(["'].*["']|null)$/
 
 	# Inline map support, e.g. reality-opts: { ..., short-id: 00000000 }
-	INLINE_SHORT_ID_REGEX = /(short-id:\s*)(?!["'\[]|null)([^\s,"'{}\[\]\n\r]*)(?=\s*(?:[,}\]\n\r]|$))/m.freeze
+	INLINE_SHORT_ID_REGEX = /(short-id:[ \t]+)(?!["'\[]|null)([^\s,"'{}\[\]\n\r]+)(?=[ \t]*(?:[,}\n\r]|$))/m.freeze
 
 	def self.fix_short_id_quotes(yaml_content)
 		return yaml_content unless yaml_content.include?('short-id:')
