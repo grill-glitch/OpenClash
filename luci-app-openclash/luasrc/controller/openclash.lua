@@ -1390,7 +1390,7 @@ function action_refresh_log()
 	end
 
 	local exclude_pattern = "UDP%-Receive%-Buffer%-Size|^Sec%-Fetch%-Mode|^User%-Agent|^Access%-Control|^Accept|^Origin|^Referer|^Connection|^Pragma|^Cache%-"
-	local core_pattern = "level=|^time="
+	local core_pattern = "level=|^time=|^ERROR|^WARN|^INFO|^DEBUG|^TRACE|^Error:"
 	local limit = 1000
 	local start_line = (log_len > 0 and total_lines > log_len) and (log_len + 1) or 1
 	local core_cmd, oc_cmd, core_raw, oc_raw

@@ -357,6 +357,7 @@ begin
    append_sniffer_config = '${21}' == '1'
    interface_name = '${22}'
    tcp_concurrent = '${23}' == '1'
+   core_type = '${24}'
    add_default_from_dns = '${25}' == '1'
    sniffer_parse_pure_ip = '${26}' == '1'
    find_process_mode = '${27}'
@@ -443,7 +444,7 @@ begin
 
          (Value['experimental'] ||= {})['quic-go-disable-gso'] = true if quic_gso
          if cors_origin != '0'
-            (Value['external-controller-cors'] ||= {})['allow-origins'] = [cors_origin]
+            (Value['external-controller-cors'] ||= {})['allow-origins'] = (core_type == 'Rust') ? cors_origin : [cors_origin]
             Value['external-controller-cors']['allow-private-network'] = true
          end
 
@@ -508,7 +509,8 @@ begin
          if en_mode_tun != '0' || ['2', '3'].include?(ipv6_mode)
             Value['tun'] = {
                'enable' => true, 'stack' => stack_type, 'device' => 'utun',
-               'dns-hijack' => ['127.0.0.1:53'], 'endpoint-independent-nat' => true,
+               'dns-hijack' => (core_type == 'Rust') ? '127.0.0.1:53' : ['127.0.0.1:53'],
+               'endpoint-independent-nat' => true,
                'auto-route' => false, 'auto-detect-interface' => false,
                'auto-redirect' => false, 'strict-route' => false, 'disable-icmp-forwarding' => false
             }
