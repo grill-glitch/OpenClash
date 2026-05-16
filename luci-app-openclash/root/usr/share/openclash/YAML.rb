@@ -59,13 +59,13 @@ module YAML
 
 	private
 
-	SHORT_ID_REGEX = /^(\s*)short-id:\s*(.*)$/
-	LIST_ITEM_REGEX = /^(\s*)-\s*(.*)$/
-	KEY_REGEX = /^(\s*)([a-zA-Z0-9_-]+):\s*(.*)$/
+	SHORT_ID_REGEX = /^(\s*)short-id:\s*([^#\s]*)(?:\s*#.*)?$/
+	LIST_ITEM_REGEX = /^(\s*)-\s*([^#\s]*)(?:\s*#.*)?$/
+	KEY_REGEX = /^(\s*)([a-zA-Z0-9_-]+):\s*([^#\s]*)(?:\s*#.*)?$/
 	QUOTED_VALUE_REGEX = /^(["'].*["']|null)$/
 
 	# Inline map support, e.g. reality-opts: { ..., short-id: 00000000 }
-	INLINE_SHORT_ID_REGEX = /(short-id:[ \t]+)(?!["'\[]|null)([^\s,"'{}\[\]\n\r]+)(?=[ \t]*(?:[,}\n\r]|$))/m.freeze
+	INLINE_SHORT_ID_REGEX = /(short-id:[ \t]+)(?!["'\[]|null)([^\s,"'{}\[\]\n\r]+)(?=[ \t]*(?:[,}\n\r]|$))/
 
 	def self.fix_short_id_quotes(yaml_content)
 		return yaml_content unless yaml_content.include?('short-id:')
@@ -89,15 +89,16 @@ module YAML
 						is_list = false
 						(short_id_index + 1...lines.size).each do |i|
 							next_line = lines[i]
-							next if next_line.strip.empty?
+							next if next_line.strip.empty? || next_line.strip.start_with?('#')
 							if next_line[/^\s*/].length > indent.length
 								if next_line =~ LIST_ITEM_REGEX
 									is_list = true
 									# Quote list items if needed
 									item_indent = $1
 									item_value = $2.strip
-									if item_value !~ QUOTED_VALUE_REGEX && item_value !~ KEY_REGEX
-										lines[i] = "#{item_indent}- \"#{item_value}\"\n"
+									if !item_value.empty? && item_value !~ QUOTED_VALUE_REGEX && item_value !~ KEY_REGEX
+										comment = next_line =~ /(?:\s+#.*)$/ ? next_line[/(?:\s+#.*)$/] : ""
+										lines[i] = "#{item_indent}- \"#{item_value}\"#{comment}\n"
 									end
 								else
 									# Still inside short-id but not a list item yet, maybe comments or other keys?
@@ -108,9 +109,13 @@ module YAML
 								break
 							end
 						end
-						lines[short_id_index] = "#{indent}short-id: \"\"\n" unless is_list
+						unless is_list
+							comment = line =~ /(?:\s+#.*)$/ ? line[/(?:\s+#.*)$/] : ""
+							lines[short_id_index] = "#{indent}short-id: \"\"#{comment}\n"
+						end
 					elsif value !~ QUOTED_VALUE_REGEX
-						lines[short_id_index] = "#{indent}short-id: \"#{value}\"\n"
+						comment = line =~ /(?:\s+#.*)$/ ? line[/(?:\s+#.*)$/] : ""
+						lines[short_id_index] = "#{indent}short-id: \"#{value}\"#{comment}\n"
 					end
 				end
 			end

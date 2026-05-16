@@ -1,12 +1,15 @@
 name: Compile The New Version OpenClash
 
-on: 
+on:
   push:
     branches:
       - dev
     paths:
       - 'luci-app-openclash/Makefile'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   Get-Version:

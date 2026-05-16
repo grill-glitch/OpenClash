@@ -14,8 +14,9 @@ yml_other_set()
 {
    ruby -ryaml -rYAML -I "/usr/share/openclash" -E UTF-8 -e "
    begin
-      Value = YAML.load_file('$2');
+      Value = YAML.load_file('$2') || {};
    rescue Exception => e
+      Value = {};
       YAML.LOG_ERROR('Load File Failed,【' + e.message + '】');
    end;
 
